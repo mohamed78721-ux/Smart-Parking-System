@@ -1,10 +1,8 @@
-import mysql.connector
-
 from mysql.connector import Error
 
 from db import create_connection
 
-def add_user(username,password_hash,full_name,phone,role,status):
+def add_user(username, password_hash, full_name, phone, role, status):
     connection = create_connection()
     
     if connection is None:
@@ -13,55 +11,32 @@ def add_user(username,password_hash,full_name,phone,role,status):
     cursor = None
 
     try:
-            cursor = connection.cursor()
-    
-    
-            query = """
-            INSERT INTO users
-            (username,password_hash,full_name,phone,role,status)
-            VALUES (%s, %s, %s, %s, %s, %s)
-            """
-    
-            values = (
-                
-                username,
-                password_hash,
-                full_name,
-                phone,
-                role,
-                status
-                
-            )
+        cursor = connection.cursor()
+
+        query = """
+        INSERT INTO users
+        (username, password_hash, full_name, phone, role, status)
+        VALUES (%s, %s, %s, %s, %s, %s)
+        """
+        values = (username, password_hash, full_name, phone, role, status)
+
+        cursor.execute(query, values)
+        connection.commit()
+
+        print("User added successfully!")
+        print("User ID:", cursor.lastrowid)
+        return True
     except Error as error:
         connection.rollback()
         print("Error adding user:", error)
         return False
-
-    cursor.execute(query, values)
-
-    connection.commit()
-
-    print("user added successfully!")
-    print("user ID:", cursor.lastrowid)
-
-    return True
-
-
-    connection.rollback()
-
-    print("Error adding user:", error)
-
-    return False
-
-    
-
-    if cursor is not None:
+    finally:
+        if cursor is not None:
             cursor.close()
-
-    if connection.is_connected():
+        if connection.is_connected():
             connection.close()
 
-
+#############################################################################
 def view_users():
 
     connection = create_connection()

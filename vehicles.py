@@ -101,3 +101,98 @@ def view_vehicles():
 
         if connection.is_connected():
             connection.close()
+#########################################################################################
+
+def get_vehicles():
+
+    connection = create_connection()
+
+    if connection is None:
+        return []
+
+    cursor = None
+
+    try:
+        cursor = connection.cursor()
+
+        query = """
+        SELECT vehicle_id, plate_number, vehicle_type,
+               owner_name, owner_phone
+        FROM vehicles
+        """
+
+        cursor.execute(query)
+
+        vehicles = cursor.fetchall()
+
+        return vehicles
+
+    except Error as error:
+        print("Error retrieving vehicles:", error)
+        return []
+
+    finally:
+        if cursor is not None:
+            cursor.close()
+
+        if connection.is_connected():
+            connection.close()
+
+def delete_vehicle(vehicle_id):
+
+    connection = create_connection()
+
+    if connection is None:
+        return "error"
+
+    cursor = None
+
+    try:
+        cursor = connection.cursor()
+
+        # Check whether vehicle has parking sessions
+        query = """
+        SELECT COUNT(*)
+        FROM parking_sessions
+        WHERE vehicle_id = %s
+        """
+
+        cursor.execute(query, (vehicle_id,))
+        result = cursor.fetchone()
+
+        if result[0] > 0:
+            print("Cannot delete vehicle: parking records exist.")
+            return "has_sessions"
+
+        # Delete vehicle
+        query = """
+        DELETE FROM vehicles
+        WHERE vehicle_id = %s
+        """
+
+        cursor.execute(query, (vehicle_id,))
+
+        if cursor.rowcount == 0:
+            return "not_found"
+
+        connection.commit()
+
+        print("Vehicle deleted successfully!")
+
+        return "success"
+
+    except Error as error:
+
+        connection.rollback()
+
+        print("Error deleting vehicle:", error)
+
+        return "error"
+
+    finally:
+
+        if cursor is not None:
+            cursor.close()
+
+        if connection.is_connected():
+            connection.close()
