@@ -211,3 +211,58 @@ def register_vehicle_exit(vehicle_id):
 
         if connection.is_connected():
             connection.close()
+# ================= GET PARKING SESSIONS =================
+
+def get_parking_sessions():
+
+    connection = create_connection()
+
+    if connection is None:
+        return []
+
+    cursor = None
+
+    try:
+        cursor = connection.cursor()
+
+        query = """
+        SELECT
+            ps.session_id,
+            ps.vehicle_id,
+            ps.space_id,
+            v.plate_number,
+            p.space_number,
+            ps.entry_time,
+            ps.exit_time,
+            ps.duration_minutes,
+            ps.fee,
+            ps.status
+        FROM parking_sessions ps
+
+        JOIN vehicles v
+            ON ps.vehicle_id = v.vehicle_id
+
+        JOIN parking_spaces p
+            ON ps.space_id = p.space_id
+
+        ORDER BY ps.session_id DESC
+        """
+
+        cursor.execute(query)
+
+        sessions = cursor.fetchall()
+
+        return sessions
+
+    except Error as error:
+
+        print("Error retrieving parking sessions:", error)
+        return []
+
+    finally:
+
+        if cursor is not None:
+            cursor.close()
+
+        if connection.is_connected():
+            connection.close()

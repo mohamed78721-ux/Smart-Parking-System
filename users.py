@@ -2,7 +2,9 @@ from mysql.connector import Error
 
 from db import create_connection
 
-def add_user(username, password_hash, full_name, phone, role, status):
+import hashlib
+
+def add_user(username, password, full_name, phone, role, status):
     connection = create_connection()
     
     if connection is None:
@@ -13,6 +15,9 @@ def add_user(username, password_hash, full_name, phone, role, status):
     try:
         cursor = connection.cursor()
 
+        password_hash = hashlib.sha256(
+            password.encode()
+        ).hexdigest()
         query = """
         INSERT INTO users
         (username, password_hash, full_name, phone, role, status)
@@ -84,3 +89,50 @@ def view_users():
 
         if connection.is_connected():
             connection.close()
+
+##############################################################################
+def login_user(username, password):
+
+
+    connection = create_connection()
+
+    if connection is None:
+        return None
+
+    cursor = None
+
+    try:
+        cursor = connection.cursor()
+
+        query = """
+        SELECT user_id, username, password_hash, full_name, role
+        FROM users
+        WHERE username = %s AND status = 'active'
+        """
+
+        cursor.execute(query, (username,))
+        user = cursor.fetchone()
+
+        if user is None:
+            return None
+
+        password_hash = hashlib.sha256(
+            password.encode()
+        ).hexdigest()
+
+        if password_hash == user[2]:
+            return user
+
+        return None
+
+    except Error as error:
+        print("Login error:", error)
+        return None
+
+    finally:
+        if cursor is not None:
+            cursor.close()
+
+        if connection.is_connected():
+            connection.close()
+

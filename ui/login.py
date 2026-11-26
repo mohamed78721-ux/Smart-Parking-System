@@ -1,5 +1,6 @@
 
 import sys
+from users import login_user
 
 from PySide6.QtWidgets import (
     QApplication,
@@ -13,7 +14,7 @@ from PySide6.QtWidgets import (
 
 from PySide6.QtCore import Qt
 
-
+from ui.dashboard import DashboardWindow
 class LoginWindow(QMainWindow):
 
     def __init__(self):
@@ -46,10 +47,12 @@ class LoginWindow(QMainWindow):
             QLineEdit.EchoMode.Password
         )
         self.password_input.setFixedHeight(45)
+        self.password_input.setClearButtonEnabled(True)
 
         # Login button
         login_button = QPushButton("LOGIN")
         login_button.setFixedHeight(45)
+        login_button.clicked.connect(self.handle_login)
 
         # Message
         self.message = QLabel("")
@@ -120,13 +123,27 @@ class LoginWindow(QMainWindow):
             }
 
         """)
+    #=====================handle login=========================
+    def handle_login(self):
+        username = self.username_input.text().strip()
+        password = self.password_input.text()
 
+        if not username or not password:
+            self.message.setText("Please enter username and password.")
+            return
+
+        user = login_user(username, password)
+
+        if user is None:
+            self.message.setText("Invalid username or password.")
+            return
+
+        self.dashboard = DashboardWindow()
+        self.dashboard.showMaximized()
+        self.close()
 
 if __name__ == "__main__":
-
     app = QApplication(sys.argv)
-
     window = LoginWindow()
     window.show()
-
     sys.exit(app.exec())
